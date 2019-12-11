@@ -1,0 +1,23 @@
+#!/bin/bash
+
+# if [ -z $@ ]
+# then
+#   echo "missing something?"
+#   exit 1
+# fi
+
+source .env
+
+IFS=', ' read -r -a NODES <<< "$DOCKER_NODES"
+
+for node in "${NODES[@]}"
+do
+  echo -e "\x1B[1mNode: $node\x1B[0m"
+  if [ $node = '192.168.202.146' ]
+  then
+    IDENTITY_FILE=${PRIVATE_KEY2}
+  else
+    IDENTITY_FILE=${PRIVATE_KEY1}
+  fi
+  ssh -i ${IDENTITY_FILE} "centos@$node" "$@"
+done

@@ -1,0 +1,35 @@
+#!/bin/bash
+
+if [ $# -eq 0 ]; then
+  echo "No arguments supplied"
+  exit 1
+fi
+
+if [ -z "$1" ]; then
+  echo "No argument supplied"
+  exit 1
+fi
+
+PATH_TO_SUBMODULE=$1
+
+if [ -d "$PATH_TO_SUBMODULE" ]; then 
+  if [ -L "$PATH_TO_SUBMODULE" ]; then
+    echo It is a symlink!
+    # Symbolic link specific commands go here.
+    exit 1
+  else
+    echo "It's a directory!"
+
+    # Remove the submodule entry from .git/config
+    git submodule deinit -f $PATH_TO_SUBMODULE
+
+    # Remove the entry in .gitmodules and remove the submodule directory located at path/to/submodule
+    git rm -f $PATH_TO_SUBMODULE
+
+    # Remove the submodule directory from the superproject's .git/modules directory
+    rm -rf .git/modules/$PATH_TO_SUBMODULE
+  fi
+else
+  echo Not a directory!
+  exit 1
+fi

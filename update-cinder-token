@@ -1,0 +1,44 @@
+#!/bin/bash
+
+# if [ -z $@ ]
+# then
+#   echo "missing something?"
+#   exit 1
+# fi
+
+source .env
+
+IFS=', ' read -r -a NODES <<< "$DOCKER_NODES"
+
+CARGA="{
+  \"auth\": {
+    \"passwordCredentials\": {
+      \"username\": \"$USERNAME\",
+      \"password\": \"$PASSWORD\"
+    },
+    \"tenantId\": \"e003736a293c41c0a8bc90f0fe057149\"
+  }
+}"
+
+TOKEN=`curl -s -X POST -H 'Content-type: application/json' -d "$CARGA" http://192.168.151.50:5000/v2.0/tokens | jq -r '.access.token.id'`
+
+if [ "$TOKEN" == 'null' ]
+then
+  echo 'no token!'
+  exit 1
+fi
+
+COMMAND1="docker plugin set rexray/cinder CINDER_TOKENID=$TOKEN && docker plugin enable rexray/cinder"
+echo $COMMAND1
+
+for node in "${NODES[@]}"
+do
+  echo $node
+  if [ $node = '192.168.202.146' ]
+  then
+    IDENTITY_FILE=${PRIVATE_KEY2}
+  else
+    IDENTITY_FILE=${PRIVATE_KEY1}
+  fi
+  ssh -i ${IDENTITY_FILE} "centos@$node" "$COMMAND1"
+done
